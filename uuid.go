@@ -7,31 +7,51 @@ import (
 	"github.com/james-lawrence/duckdbtypes/internal/uuidx"
 )
 
-const UUIDLength = 16
-
-type UUID [UUIDLength]byte
+type UUID [uuidx.ByteLength]byte
 
 func (u UUID) ByteLength() int {
-	return UUIDLength
+	return uuidx.ByteLength
+}
+
+func (t *UUID) AssignTo(dst any) error {
+	switch v := dst.(type) {
+	case *[16]byte:
+		*v = *t
+		return nil
+	case *[]byte:
+		*v = make([]byte, 16)
+		copy(*v, t[:])
+		return nil
+	case *string:
+		*v = t.String()
+		return nil
+	default:
+		if nextDst, retry := GetAssignToDstType(v); retry {
+			return t.AssignTo(nextDst)
+		}
+	}
+
+	return fmt.Errorf("cannot assign %v into %T", t, dst)
 }
 
 func (u *UUID) Scan(v any) error {
 	switch val := v.(type) {
 	case []byte:
-		if len(val) != UUIDLength {
+		if len(val) != uuidx.ByteLength {
 			return u.Scan(string(val))
 		}
 		copy(u[:], val[:])
+		return nil
 	case string:
 		id, err := uuidx.Parse(val)
 		if err != nil {
 			return err
 		}
 		copy(u[:], id[:])
+		return nil
 	default:
 		return fmt.Errorf("invalid UUID value type: %T", val)
 	}
-	return nil
 }
 
 func (u *UUID) String() string {

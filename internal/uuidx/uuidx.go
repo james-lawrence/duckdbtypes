@@ -7,9 +7,11 @@ import (
 	"strings"
 )
 
+const ByteLength = 16
+
 // A UUID is a 128 bit (16 byte) Universal Unique IDentifier as defined in RFC
 // 4122.
-type UUID [16]byte
+type UUID [ByteLength]byte
 
 // Parse decodes s into a UUID or returns an error if it cannot be parsed.  Both
 // the standard UUID forms defined in RFC 4122
